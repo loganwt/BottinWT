@@ -1,0 +1,4 @@
+const TWITCH_CLIENT_ID = '<Twitch Client ID Here>';
+const TWITCH_SECRET    = '<Twitch Client Secret Here>';
+const SESSION_SECRET   = '<Session Secret Here>';
+const CALLBACK_URL     = '<Callback URL Here>';
