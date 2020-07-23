@@ -8,8 +8,8 @@ var request        = require('request');
 var handlebars     = require('handlebars');
 var TwitchClient = require('twitch').default;
 var PubSubClient = require('twitch-pubsub-client').default;
-
-console.log(conf.TWITCH_CLIENT_ID);
+var StaticAuthProvider = require('twitch').StaticAuthProvider;
+var RefreshableAuthProvider = require('twitch').RefreshableAuthProvider;
 
 var app = express();
 app.use(session({secret: conf.SESSION_SECRET, resave: false, saveUninitialized: false}));
@@ -79,20 +79,42 @@ var template = handlebars.compile(`
     <tr><th>Image</th><td>{{logo}}</td></tr>
 </table></html>`);
 
-app.get('/', function (req, res) {
+app.get('/', async function (req, res) {
     if(req.session && req.session.passport && req.session.passport.user) {
 
-        console.log(req.session.passport.user);
-
         const accessToken = req.session.passport.user.accessToken;
-        const twitchUserId = req.session.passport.user.id;
+        const refreshToken = req.session.passport.user.refreshToken;
 
-        const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken, 'channel:read:redemptions');
+        //messy but it gets the number correctly
+        const twitchUserId = req.session.passport.user.data[0].id.toString();
+
+        //DEPRECATED --> const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken,'channel:read:redemptions');
+        //use StaticAuthProvider or RefreshableAuthProvider in the TwitchClient Constructor instead.
+        //https://d-fischer.github.io/twitch/reference/classes/ApiClient.html#s_withCredentials
+
+        //create the authprovider
+        const authProvider = new RefreshableAuthProvider(
+          new StaticAuthProvider(twitchUserId, accessToken),
+          {
+              secret: conf.TWITCH_SECRET,
+              refreshToken,
+              onRefresh: (token) => {
+                // do things with the new token data, e.g. save them in your database
+              }
+          }
+      );
+
+        //create Client with new AuthProvider
+        const twitchClient = new TwitchClient({authProvider});
         const pubSubClient = new PubSubClient();
-        pubSubClient.registerUserListener(twitchClient, twitchUserId);
-        pubSubClient.onRedemption(twitchUserId, (message) => {
-            console.log(message.rewardName);
-        }).then();
+
+        //await waits for a Promise to be fulfilled or rejected.
+        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
+        await pubSubClient.registerUserListener(twitchClient);
+
+        const listener = await pubSubClient.onRedemption(twitchUserId, (message) => {
+          console.log(message.rewardName);
+        });
 
         res.send(template(req.session.passport.user));
     } else {
@@ -101,5 +123,5 @@ app.get('/', function (req, res) {
 });
   
 app.listen(3000, function () {
-console.log('Twitch auth sample listening on port 3000!')
+  console.log('Twitch auth sample listening on port 3000!')
 });
