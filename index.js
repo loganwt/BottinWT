@@ -84,11 +84,13 @@ app.get('/', function (req, res) {
 
         console.log(req.session.passport.user);
 
-        const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, req.session.passport.user.accessToken, 'channel:read:redemptions');
-        console.log(req.session.passport.user);
+        const accessToken = req.session.passport.user.accessToken;
+        const twitchUserId = req.session.passport.user.id;
+
+        const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken, 'channel:read:redemptions');
         const pubSubClient = new PubSubClient();
-        pubSubClient.registerUserListener(twitchClient, '25465433');
-        pubSubClient.onRedemption('25465433', (message) => {
+        pubSubClient.registerUserListener(twitchClient, twitchUserId);
+        pubSubClient.onRedemption(twitchUserId, (message) => {
             console.log(message.rewardName);
         }).then();
 
