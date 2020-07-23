@@ -114,7 +114,7 @@ app.get('/', function (req, res) {
 });
   
 app.listen(3000, function () {
-console.log('Twitch auth sample listening on port 3000!')
+console.log('Page up on localhost:3000')
 });
 
 function onChannelPointReward(rewardName) {
@@ -153,9 +153,15 @@ function onConnectedHandler (addr, port) {
 }
 
 function onTimeoutJoey() {
-  client.timeout(conf.CHANNEL_NAME, "N7_fishy", 600, ":)");
+  var timeoutTime = 600;
+  var joeyUsername = 'N7_fishy';
+  client.timeout(conf.CHANNEL_NAME, joeyUsername, timeoutTime, ":)");
+  client.say(conf.CHANNEL_NAME, joeyUsername + " has been timed out for " + timeoutTime + " seconds.")
 }
 
 function onTimeoutThomas() {
-  client.timeout(conf.CHANNEL_NAME, "Maligoze", 600, ":)");
+  var timeoutTime = 600;
+  var thomasUsername = 'maligoze';
+  client.timeout(conf.CHANNEL_NAME, thomasUsername, timeoutTime, ":)");
+  client.say(conf.CHANNEL_NAME, thomasUsername + " has been timed out for " + timeoutTime + " seconds.")
 }
