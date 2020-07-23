@@ -1,4 +1,7 @@
-const TWITCH_CLIENT_ID = '<Twitch Client ID Here>';
-const TWITCH_SECRET    = '<Twitch Client Secret Here>';
-const SESSION_SECRET   = '<Session Secret Here>';
-const CALLBACK_URL     = '<Callback URL Here>';
+
+exports.config = config = {
+    TWITCH_CLIENT_ID : '<Twitch Client ID Here>',
+    TWITCH_SECRET    : '<Twitch Client Secret Here>',
+    SESSION_SECRET   : '<Session Secret Here>',
+    CALLBACK_URL     : '<Callback URL Here>'
+}
