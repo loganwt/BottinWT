@@ -82,16 +82,14 @@ var template = handlebars.compile(`
 app.get('/', function (req, res) {
     if(req.session && req.session.passport && req.session.passport.user) {
 
-        console.log(req.session.passport.user);
-
-        const accessToken = req.session.passport.user.accessToken;
-        const twitchUserId = req.session.passport.user.id;
+        var accessToken = req.session.passport.user.accessToken;
+        var twitchUserId = req.session.passport.user.data[0].id;
 
         const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken, 'channel:read:redemptions');
         const pubSubClient = new PubSubClient();
         pubSubClient.registerUserListener(twitchClient, twitchUserId);
         pubSubClient.onRedemption(twitchUserId, (message) => {
-            console.log(message.rewardName);
+          console.log(message.rewardName);
         }).then();
 
         res.send(template(req.session.passport.user));
