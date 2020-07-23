@@ -4,4 +4,8 @@ exports.config = config = {
     TWITCH_SECRET    : '<Twitch Client Secret Here>',
     SESSION_SECRET   : '<Session Secret Here>',
     CALLBACK_URL     : '<Callback URL Here>'
+
+    BOT_USERNAME     : '<Bot Account Name Here>',
+    BOT_OAUTH_TOKEN  : '<Get from https://twitchapps.com/tmi/ while logged into bot account>',
+    CHANNEL_NAME     : '<Channel or Channels Here>'
 }
