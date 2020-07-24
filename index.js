@@ -17,13 +17,11 @@ app.use(express.static('public'));
 app.use(passport.initialize());
 app.use(passport.session());
 
-console.log(conf.BOT_OAUTH_TOKEN);
-
 // Define configuration options
 const opts = {
   identity: {
     username: conf.BOT_USERNAME,
-    password: conf.BOT_OAUTH_TOKEN
+    password: conf.BOT_OAUTH_SECRET
   },
   channels: [
     conf.CHANNEL_NAME
@@ -114,7 +112,7 @@ app.get('/', function (req, res) {
 });
   
 app.listen(3000, function () {
-console.log('Page up on localhost:3000')
+  console.log('Page up on localhost:3000')
 });
 
 function onChannelPointReward(rewardName) {
