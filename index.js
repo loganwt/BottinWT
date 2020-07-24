@@ -6,10 +6,10 @@ var passport       = require('passport');
 var OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 var request        = require('request');
 var handlebars     = require('handlebars');
-var TwitchClient   = require('twitch').default;
-var PubSubClient   = require('twitch-pubsub-client').default;
-var tmi            = require('tmi.js');
-//var botFunc        = require('./botFunctions');
+var TwitchClient = require('twitch').default;
+var PubSubClient = require('twitch-pubsub-client').default;
+var StaticAuthProvider = require('twitch').StaticAuthProvider;
+var RefreshableAuthProvider = require('twitch').RefreshableAuthProvider;
 
 var app = express();
 app.use(session({secret: conf.SESSION_SECRET, resave: false, saveUninitialized: false}));
@@ -90,20 +90,51 @@ app.get('/auth/twitch', passport.authenticate('twitch', { scope: 'channel:read:r
 app.get('/auth/twitch/callback', passport.authenticate('twitch', { successRedirect: '/', failureRedirect: '/' }));
 
 var template = handlebars.compile(`
-`);
+<html><head><title>Twitch Auth Sample</title></head>
+<table>
+    <tr><th>Access Token</th><td>{{accessToken}}</td></tr>
+    <tr><th>Refresh Token</th><td>{{refreshToken}}</td></tr>
+    <tr><th>Display Name</th><td>{{display_name}}</td></tr>
+    <tr><th>Bio</th><td>{{bio}}</td></tr>
+    <tr><th>Image</th><td>{{logo}}</td></tr>
+</table></html>`);
 
-app.get('/', function (req, res) {
+app.get('/', async function (req, res) {
     if(req.session && req.session.passport && req.session.passport.user) {
 
-        var accessToken = req.session.passport.user.accessToken;
-        var twitchUserId = req.session.passport.user.data[0].id;
+        const accessToken = req.session.passport.user.accessToken;
+        const refreshToken = req.session.passport.user.refreshToken;
 
-        const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken, 'channel:read:redemptions');
+        //messy but it gets the number correctly
+        const twitchUserId = req.session.passport.user.data[0].id;
+
+        //DEPRECATED --> const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken,'channel:read:redemptions');
+        //use StaticAuthProvider or RefreshableAuthProvider in the TwitchClient Constructor instead.
+        //https://d-fischer.github.io/twitch/reference/classes/ApiClient.html#s_withCredentials
+
+        //create the authprovider
+        const authProvider = new RefreshableAuthProvider(
+          new StaticAuthProvider(conf.TWITCH_CLIENT_ID, accessToken),
+          {
+            secret: conf.TWITCH_SECRET,
+            refreshToken,
+            onRefresh: (token) => {
+              // do things with the new token data, e.g. save them in your database
+            }
+          }
+        );
+
+        //create Client with new AuthProvider
+        const twitchClient = new TwitchClient({authProvider});
         const pubSubClient = new PubSubClient();
-        pubSubClient.registerUserListener(twitchClient, twitchUserId);
-        pubSubClient.onRedemption(twitchUserId, (message) => {
-          onChannelPointReward(message.rewardName);
-        }).then();
+
+        //await waits for a Promise to be fulfilled or rejected.
+        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
+        await pubSubClient.registerUserListener(twitchClient, twitchUserId);
+
+        const listener = await pubSubClient.onRedemption(twitchUserId, (message) => {
+          console.log(message.rewardName);
+        });
 
         res.send(template(req.session.passport.user));
     } else {
