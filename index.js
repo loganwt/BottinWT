@@ -86,7 +86,7 @@ app.get('/', async function (req, res) {
         const refreshToken = req.session.passport.user.refreshToken;
 
         //messy but it gets the number correctly
-        const twitchUserId = req.session.passport.user.data[0].id.toString();
+        const twitchUserId = req.session.passport.user.data[0].id;
 
         //DEPRECATED --> const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken,'channel:read:redemptions');
         //use StaticAuthProvider or RefreshableAuthProvider in the TwitchClient Constructor instead.
@@ -94,15 +94,15 @@ app.get('/', async function (req, res) {
 
         //create the authprovider
         const authProvider = new RefreshableAuthProvider(
-          new StaticAuthProvider(twitchUserId, accessToken),
+          new StaticAuthProvider(conf.TWITCH_CLIENT_ID, accessToken),
           {
-              secret: conf.TWITCH_SECRET,
-              refreshToken,
-              onRefresh: (token) => {
-                // do things with the new token data, e.g. save them in your database
-              }
+            secret: conf.TWITCH_SECRET,
+            refreshToken,
+            onRefresh: (token) => {
+              // do things with the new token data, e.g. save them in your database
+            }
           }
-      );
+        );
 
         //create Client with new AuthProvider
         const twitchClient = new TwitchClient({authProvider});
@@ -110,7 +110,7 @@ app.get('/', async function (req, res) {
 
         //await waits for a Promise to be fulfilled or rejected.
         //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
-        await pubSubClient.registerUserListener(twitchClient);
+        await pubSubClient.registerUserListener(twitchClient, twitchUserId);
 
         const listener = await pubSubClient.onRedemption(twitchUserId, (message) => {
           console.log(message.rewardName);
