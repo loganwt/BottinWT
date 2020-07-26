@@ -123,7 +123,7 @@ app.get('/', async function (req, res) {
         await pubSubClient.registerUserListener(twitchClient, twitchUserId);
 
         const listener = await pubSubClient.onRedemption(twitchUserId, (message) => {
-          console.log(message.rewardName);
+          onChannelPointReward(message.rewardName);
         });
 
         res.send(template(req.session.passport.user));
