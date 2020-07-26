@@ -10,6 +10,7 @@ var TwitchClient = require('twitch').default;
 var PubSubClient = require('twitch-pubsub-client').default;
 var StaticAuthProvider = require('twitch').StaticAuthProvider;
 var RefreshableAuthProvider = require('twitch').RefreshableAuthProvider;
+var tmi            = require('tmi.js');
 
 var app = express();
 app.use(session({secret: conf.SESSION_SECRET, resave: false, saveUninitialized: false}));
@@ -90,14 +91,7 @@ app.get('/auth/twitch', passport.authenticate('twitch', { scope: 'channel:read:r
 app.get('/auth/twitch/callback', passport.authenticate('twitch', { successRedirect: '/', failureRedirect: '/' }));
 
 var template = handlebars.compile(`
-<html><head><title>Twitch Auth Sample</title></head>
-<table>
-    <tr><th>Access Token</th><td>{{accessToken}}</td></tr>
-    <tr><th>Refresh Token</th><td>{{refreshToken}}</td></tr>
-    <tr><th>Display Name</th><td>{{display_name}}</td></tr>
-    <tr><th>Bio</th><td>{{bio}}</td></tr>
-    <tr><th>Image</th><td>{{logo}}</td></tr>
-</table></html>`);
+`);
 
 app.get('/', async function (req, res) {
     if(req.session && req.session.passport && req.session.passport.user) {
@@ -107,10 +101,6 @@ app.get('/', async function (req, res) {
 
         //messy but it gets the number correctly
         const twitchUserId = req.session.passport.user.data[0].id;
-
-        //DEPRECATED --> const twitchClient = TwitchClient.withCredentials(conf.TWITCH_CLIENT_ID, accessToken,'channel:read:redemptions');
-        //use StaticAuthProvider or RefreshableAuthProvider in the TwitchClient Constructor instead.
-        //https://d-fischer.github.io/twitch/reference/classes/ApiClient.html#s_withCredentials
 
         //create the authprovider
         const authProvider = new RefreshableAuthProvider(
